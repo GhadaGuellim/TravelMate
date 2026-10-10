@@ -29,10 +29,10 @@ def user_data(user):
         "bio": user.bio or "",
         "city": user.city or "",
         "country": user.country or "",
+        "preferences": user.preferences or "",
         "avatar_url": user.avatar_url or "",
         "created_at": user.created_at.isoformat() if user.created_at else None,
     }
-
 
 class RegisterView(APIView):
     authentication_classes = []

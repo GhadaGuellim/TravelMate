@@ -13,6 +13,7 @@ class User(Document):
     bio = StringField(max_length=500)
     city = StringField(max_length=100)
     country = StringField(max_length=100)
+    preferences = StringField(max_length=500)
     avatar_url = StringField(max_length=200000)
 
     meta = {"collection": "users"}
