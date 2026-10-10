@@ -7,7 +7,11 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
-from .serializers import LoginSerializer, RegisterSerializer
+from .serializers import (
+    LoginSerializer,
+    ProfileUpdateSerializer,
+    RegisterSerializer,
+)
 
 
 def get_tokens(user):
@@ -18,7 +22,16 @@ def get_tokens(user):
 
 
 def user_data(user):
-    return {"id": str(user.id), "email": user.email, "full_name": user.full_name}
+    return {
+        "id": str(user.id),
+        "email": user.email,
+        "full_name": user.full_name,
+        "bio": user.bio or "",
+        "city": user.city or "",
+        "country": user.country or "",
+        "avatar_url": user.avatar_url or "",
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+    }
 
 
 class RegisterView(APIView):
@@ -82,3 +95,19 @@ class MeView(APIView):
     @extend_schema(responses={200: OpenApiTypes.OBJECT}, tags=["Auth"])
     def get(self, request):
         return Response(user_data(request.user.user))
+
+    @extend_schema(
+        request=ProfileUpdateSerializer,
+        responses={200: OpenApiTypes.OBJECT},
+        tags=["Auth"],
+    )
+    def patch(self, request):
+        serializer = ProfileUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user.user
+        for field, value in serializer.validated_data.items():
+            setattr(user, field, value)
+        user.save()
+
+        return Response(user_data(user))

@@ -10,6 +10,11 @@ class User(Document):
     password = StringField(required=True)
     created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
 
+    bio = StringField(max_length=500)
+    city = StringField(max_length=100)
+    country = StringField(max_length=100)
+    avatar_url = StringField(max_length=200000)
+
     meta = {"collection": "users"}
 
     def set_password(self, raw_password):
