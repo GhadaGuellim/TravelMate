@@ -27,8 +27,11 @@ def get_post(post_id):
 
 
 def author_data(user):
-    return {"id": str(user.id), "full_name": user.full_name}
-
+    return {
+        "id": str(user.id),
+        "full_name": user.full_name,
+        "avatar_url": user.avatar_url or "",
+    }
 
 def comment_data(c):
     return {
