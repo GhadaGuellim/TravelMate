@@ -1,6 +1,7 @@
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -111,3 +112,65 @@ class MeView(APIView):
         user.save()
 
         return Response(user_data(user))
+
+
+class UserProfileView(APIView):
+    """US12 – GET : consulter le profil public d'un voyageur avec compteurs."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(responses={200: OpenApiTypes.OBJECT}, tags=["Utilisateurs"])
+    def get(self, request, user_id):
+        me = request.user.user
+        target = User.objects(id=user_id).first()
+        if not target:
+            raise NotFound("Utilisateur introuvable.")
+
+        followers_count = User.objects(following=target).count()
+        following_count = len(target.following or [])
+        is_following = target in (me.following or [])
+
+        return Response(
+            {
+                **user_data(target),
+                "followers_count": followers_count,
+                "following_count": following_count,
+                "is_following": is_following,
+            }
+        )
+
+
+class FollowView(APIView):
+    """US12 – POST : basculer suivre / ne plus suivre un voyageur."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(request=None, responses={200: OpenApiTypes.OBJECT}, tags=["Utilisateurs"])
+    def post(self, request, user_id):
+        me = request.user.user
+        target = User.objects(id=user_id).first()
+        if not target:
+            raise NotFound("Utilisateur introuvable.")
+        if str(target.id) == str(me.id):
+            return Response(
+                {"error": "Vous ne pouvez pas vous suivre vous-même."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if target in (me.following or []):
+            # Unfollow
+            me.update(pull__following=target)
+            following = False
+        else:
+            # Follow
+            me.update(add_to_set__following=target)
+            following = True
+
+        me.reload()
+        followers_count = User.objects(following=target).count()
+        return Response(
+            {
+                "following": following,
+                "followers_count": followers_count,
+            }
+        )

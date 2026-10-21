@@ -7,6 +7,7 @@ from mongoengine import (
     Document,
     EmbeddedDocument,
     EmbeddedDocumentField,
+    IntField,
     ListField,
     ObjectIdField,
     ReferenceField,
@@ -35,6 +36,7 @@ class Post(Document):
     likes = ListField(ReferenceField(User))
     saved_by = ListField(ReferenceField(User))
     comments = ListField(EmbeddedDocumentField(Comment))
+    shares = IntField(default=0)  # US11 : compteur de partages
     created_at = DateTimeField(default=now)
     updated_at = DateTimeField()
 

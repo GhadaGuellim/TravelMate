@@ -60,6 +60,7 @@ def post_data(post, me, request=None):
         "saved_by_me": me in post.saved_by,
         "comments_count": len(post.comments),
         "comments": [comment_data(c) for c in post.comments],
+        "shares_count": post.shares or 0,
         "is_mine": post.author.id == me.id,
         "created_at": post.created_at.isoformat() if post.created_at else None,
         "updated_at": post.updated_at.isoformat() if post.updated_at else None,
@@ -215,3 +216,22 @@ class CommentDeleteView(APIView):
             raise PermissionDenied("Tu ne peux pas supprimer ce commentaire.")
         post.update(pull__comments__id=comment.id)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PostShareView(APIView):
+    """US11 – POST : incrémente le compteur de partages et retourne le lien."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(request=None, responses={200: OpenApiTypes.OBJECT}, tags=["Publications"])
+    def post(self, request, post_id):
+        post = get_post(post_id)
+        post.update(inc__shares=1)
+        post.reload()
+        share_url = request.build_absolute_uri(f"/api/posts/{post_id}/")
+        return Response(
+            {
+                "shares_count": post.shares or 0,
+                "share_url": share_url,
+            }
+        )
