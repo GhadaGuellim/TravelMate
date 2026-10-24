@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from django.contrib.auth.hashers import check_password, make_password
-from mongoengine import DateTimeField, Document, EmailField, StringField
+from mongoengine import DateTimeField, Document, EmailField, ListField, ReferenceField, StringField
 
 
 class User(Document):
@@ -13,7 +13,11 @@ class User(Document):
     bio = StringField(max_length=500)
     city = StringField(max_length=100)
     country = StringField(max_length=100)
+    preferences = StringField(max_length=500)
     avatar_url = StringField(max_length=200000)
+
+    # US12 : liste des voyageurs suivis
+    following = ListField(ReferenceField("self"))
 
     meta = {"collection": "users"}
 

@@ -17,4 +17,5 @@ class ProfileUpdateSerializer(serializers.Serializer):
     bio = serializers.CharField(max_length=500, required=False, allow_blank=True)
     city = serializers.CharField(max_length=100, required=False, allow_blank=True)
     country = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    preferences = serializers.CharField(max_length=500, required=False, allow_blank=True)
     avatar_url = serializers.CharField(max_length=200000, required=False, allow_blank=True)
