@@ -37,6 +37,8 @@ def user_data(user):
         "service_description": user.service_description,
         "service_location": user.service_location,
         "phone": user.phone,
+        "daily_rate": user.daily_rate or 0,
+        "availabilities": list(user.availabilities or []),
         "created_at": user.created_at.isoformat() if user.created_at else None,
     }
 
@@ -94,7 +96,8 @@ class LoginView(APIView):
 
         return Response({"user": user_data(user), "tokens": get_tokens(user)})
 
-PROVIDER_FIELDS = {"service_type", "service_description", "service_location", "phone"}
+PROVIDER_FIELDS = {"service_type", "service_description", "service_location", "phone",
+                   "daily_rate", "availabilities"}
 
 class MeView(APIView):
     permission_classes = [IsAuthenticated]

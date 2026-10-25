@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from django.contrib.auth.hashers import check_password, make_password
-from mongoengine import DateTimeField, Document, EmailField, ListField, ReferenceField, StringField
+from mongoengine import DateTimeField, Document, EmailField, IntField, ListField, ReferenceField, StringField, DictField
 ROLES = ("traveler", "provider")
 SERVICE_TYPES = ("guide", "chauffeur")
 
@@ -23,6 +23,8 @@ class User(Document):
     service_description = StringField(max_length=1000)
     service_location = StringField(max_length=200)
     phone = StringField(max_length=30)
+    daily_rate = IntField(min_value=0, default=0)     
+    availabilities = ListField(DictField())            
     meta = {"collection": "users"}
 
     @property

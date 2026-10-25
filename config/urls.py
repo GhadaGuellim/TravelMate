@@ -15,7 +15,11 @@ urlpatterns = [
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema")),
     path("login/", TemplateView.as_view(template_name="users/login.html")),
     path("api/itineraries/", include("itineraries.urls")),
+    path("api/providers/", include("users.provider_urls")),
+    path("api/bookings/", include("bookings.urls")),
 ]
+
+
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
