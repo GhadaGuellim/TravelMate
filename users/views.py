@@ -6,7 +6,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from rest_framework.exceptions import ValidationError
 from .models import User
 from .serializers import (
     LoginSerializer,
@@ -27,11 +27,16 @@ def user_data(user):
         "id": str(user.id),
         "email": user.email,
         "full_name": user.full_name,
+        "role": user.role,
         "bio": user.bio or "",
         "city": user.city or "",
         "country": user.country or "",
         "preferences": user.preferences or "",
         "avatar_url": user.avatar_url or "",
+        "service_type": user.service_type,
+        "service_description": user.service_description,
+        "service_location": user.service_location,
+        "phone": user.phone,
         "created_at": user.created_at.isoformat() if user.created_at else None,
     }
 
@@ -56,7 +61,7 @@ class RegisterView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user = User(email=email, full_name=data["full_name"])
+        user = User(email=email, full_name=data["full_name"], role=data["role"])
         user.set_password(data["password"])
         user.save()
 
@@ -89,6 +94,7 @@ class LoginView(APIView):
 
         return Response({"user": user_data(user), "tokens": get_tokens(user)})
 
+PROVIDER_FIELDS = {"service_type", "service_description", "service_location", "phone"}
 
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
@@ -102,12 +108,26 @@ class MeView(APIView):
         responses={200: OpenApiTypes.OBJECT},
         tags=["Auth"],
     )
+
     def patch(self, request):
         serializer = ProfileUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
 
         user = request.user.user
-        for field, value in serializer.validated_data.items():
+
+        if user.role != "provider":
+            data = {k: v for k, v in data.items() if k not in PROVIDER_FIELDS}
+        else:
+            errors = {}
+            if "service_type" in data and not data["service_type"]:
+                errors["service_type"] = "Le type de service est obligatoire."
+            if "phone" in data and not data["phone"].strip():
+                errors["phone"] = "Le téléphone est obligatoire."
+            if errors:
+                raise ValidationError(errors)
+
+        for field, value in data.items():
             setattr(user, field, value)
         user.save()
 
@@ -174,3 +194,37 @@ class FollowView(APIView):
                 "followers_count": followers_count,
             }
         )
+
+
+def user_card(u):
+    return {
+        "id": str(u.id),
+        "full_name": u.full_name,
+        "avatar_url": u.avatar_url or "",
+        "city": u.city or "",
+        "country": u.country or "",
+    }
+
+
+class FollowingListView(APIView):
+    """Les voyageurs que je suis."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        me = request.user.user
+        me.reload()
+        # on ignore les comptes supprimés (références cassées)
+        users = [u for u in me.following if hasattr(u, "full_name")]
+        return Response([user_card(u) for u in users])
+
+
+class SuggestionsView(APIView):
+    """Voyageurs que je ne suis pas encore."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        me = request.user.user
+        me.reload()
+        excluded = [me.id] + [u.id for u in me.following]
+        users = User.objects(id__nin=excluded).order_by("-created_at").limit(8)
+        return Response([user_card(u) for u in users])

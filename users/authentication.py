@@ -18,6 +18,7 @@ class AuthenticatedUser:
         self.id = str(user.id)
         self.email = user.email
         self.full_name = user.full_name
+        self.role = user.role
 
 
 class MongoJWTAuthentication(BaseAuthentication):

@@ -41,8 +41,14 @@ def comment_data(c):
         "created_at": c.created_at.isoformat() if c.created_at else None,
     }
 
+def following_ids(me):
+    return {
+        str(u.id) for u in me.following
+        }
+def post_data(post, me, request=None,followed=None):
+    if followed is None:
+        followed = following_ids(me)
 
-def post_data(post, me, request=None):
     image = post.image or ""
     if image and not image.startswith(("http://", "https://")):
         # chemin relatif : on construit une URL complète
@@ -62,6 +68,7 @@ def post_data(post, me, request=None):
         "comments": [comment_data(c) for c in post.comments],
         "shares_count": post.shares or 0,
         "is_mine": post.author.id == me.id,
+        "is_following": str(post.author.id) in followed,
         "created_at": post.created_at.isoformat() if post.created_at else None,
         "updated_at": post.updated_at.isoformat() if post.updated_at else None,
     }
@@ -90,7 +97,8 @@ class PostListCreateView(APIView):
         limit = min(int(request.query_params.get("limit", 20)), 50)
         skip = int(request.query_params.get("skip", 0))
         posts = qs.order_by("-created_at").skip(skip).limit(limit)
-        return Response([post_data(p, me) for p in posts])
+        followed = following_ids(me)
+        return Response([post_data(p, me, request, followed) for p in posts])
 
     @extend_schema(
         request=PostSerializer, responses={201: OpenApiTypes.OBJECT}, tags=["Publications"]
@@ -183,7 +191,8 @@ class SavedPostsView(APIView):
     def get(self, request):
         me = request.user.user
         posts = Post.objects(saved_by=me).order_by("-created_at").limit(50)
-        return Response([post_data(p, me) for p in posts])
+        followed = following_ids(me)
+        return Response([post_data(p, me, request, followed) for p in posts])
 
 
 class CommentCreateView(APIView):

@@ -14,7 +14,7 @@ urlpatterns = [
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema")),
     path("login/", TemplateView.as_view(template_name="users/login.html")),
-    
+    path("api/itineraries/", include("itineraries.urls")),
 ]
 
 if settings.DEBUG:
