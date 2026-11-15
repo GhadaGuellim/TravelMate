@@ -9,10 +9,15 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import AccessToken
 
+from trips.models import Trip
 from users.models import User
 
 from .models import Review
 from .serializers import ReviewSerializer
+
+# Nom du champ de Trip qui pointe vers le prestataire/propriétaire du voyage.
+# À adapter selon ton modèle Trip (ex: "user", "owner", "provider", "created_by").
+TRIP_OWNER_FIELD = "owner"
 
 
 def get_current_user(request):
@@ -146,3 +151,43 @@ class ReviewDetailView(APIView):
 
         review.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ReceivedReviewsView(APIView):
+    """Avis reçus par l'utilisateur connecté (sur lui-même et sur ses voyages)."""
+
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request):
+        user = get_current_user(request)
+        if user is None:
+            return unauthorized()
+
+        my_trip_ids = [
+            str(t.id) for t in Trip.objects(owner=user)
+        ]
+
+        reviews = list(
+            Review.objects(
+                __raw__={
+                    "$or": [
+                        {"target_type": "provider", "target_id": str(user.id)},
+                        {"target_type": "trip", "target_id": {"$in": my_trip_ids}},
+                    ]
+                }
+            )
+            .filter(author__ne=user)
+            .order_by("-created_at")
+        )
+
+        count = len(reviews)
+        average = round(sum(r.rating for r in reviews) / count, 2) if count else 0
+
+        return Response(
+            {
+                "count": count,
+                "average": average,
+                "results": ReviewSerializer(reviews, many=True).data,
+            }
+        )
