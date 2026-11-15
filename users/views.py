@@ -13,6 +13,7 @@ from .serializers import (
     ProfileUpdateSerializer,
     RegisterSerializer,
 )
+from notifications.utils import notify
 
 
 def get_tokens(user):
@@ -188,6 +189,8 @@ class FollowView(APIView):
             # Follow
             me.update(add_to_set__following=target)
             following = True
+            notify(target, me, "follow", f"{me.full_name} a commencé à te suivre",
+                   {"user_id": str(me.id)})
 
         me.reload()
         followers_count = User.objects(following=target).count()
