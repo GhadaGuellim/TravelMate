@@ -11,8 +11,7 @@ from mongoengine import (
 
 from users.models import User
 
-TARGET_TYPES = ("place", "provider")
-
+TARGET_TYPES = ("provider", "trip")
 
 class Review(Document):
     author = ReferenceField(User, required=True, reverse_delete_rule=CASCADE)
