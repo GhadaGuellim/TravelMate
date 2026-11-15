@@ -14,6 +14,7 @@ from rest_framework.views import APIView
 
 from .models import Comment, Post, now
 from .serializers import CommentSerializer, PostSerializer, PostUpdateSerializer
+from notifications.utils import notify
 
 
 def get_post(post_id):
@@ -163,6 +164,9 @@ class PostLikeView(APIView):
             post.update(pull__likes=me)
         else:
             post.update(add_to_set__likes=me)
+            notify(post.author, me, "like", f"{me.full_name} a aimé ta publication",
+                   {"section": "feed"})
+
         post.reload()
         return Response({"liked": me in post.likes, "likes_count": len(post.likes)})
 
@@ -208,6 +212,9 @@ class CommentCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         comment = Comment(author=me, text=serializer.validated_data["text"])
         post.update(push__comments=comment)
+        notify(post.author, me, "comment",
+               f"{me.full_name} a commenté ta publication : « {comment.text[:60]} »",
+               {"section": "feed"})
         return Response(comment_data(comment), status=status.HTTP_201_CREATED)
 
 

@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'destinations',
     'itineraries',
     'bookings',
+    'notifications',
 ]
 
 MIDDLEWARE = [

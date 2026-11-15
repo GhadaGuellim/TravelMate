@@ -13,6 +13,7 @@ from users.models import User
 
 from .models import Booking, now
 from .serializers import BookingCreateSerializer, BookingRespondSerializer
+from notifications.utils import notify
 
 
 def days_between(start, end):
@@ -129,6 +130,9 @@ class BookingListCreateView(APIView):
             people=d["people"], message=d["message"], daily_rate=provider.daily_rate or 0,
         )
         b.save()
+        notify(provider, me, "booking_request",
+               f"{me.full_name} t'a envoyé une demande de réservation du {start} au {end}",
+               {"section": "requests", "id": str(b.id)})
         return Response(booking_data(b, me), status=status.HTTP_201_CREATED)
 
 
@@ -158,6 +162,9 @@ class BookingCancelView(APIView):
         b.status = "cancelled"
         b.updated_at = now()
         b.save()
+        notify(b.provider, me, "booking_cancelled",
+               f"{me.full_name} a annulé sa demande du {b.start_date} au {b.end_date}",
+               {"section": "requests", "id": str(b.id)})
         return Response(booking_data(b, me))
 
 
@@ -195,4 +202,8 @@ class BookingRespondView(APIView):
         b.response_message = d["message"]
         b.updated_at = now()
         b.save()
+        verb = "acceptée" if b.status == "accepted" else "refusée"
+        notify(b.traveler, me, f"booking_{b.status}",
+               f"{me.full_name} a {verb} ta demande du {b.start_date} au {b.end_date}",
+               {"section": "bookings", "id": str(b.id)})
         return Response(booking_data(b, me))
