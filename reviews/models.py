@@ -11,7 +11,11 @@ from mongoengine import (
 
 from users.models import User
 
-TARGET_TYPES = ("provider", "trip")
+# si c'est un tuple de textes
+TARGET_TYPES = ("provider", "trip", "place")
+
+# si c'est une liste de couples (valeur, libellé)
+TARGET_TYPES = (("provider", "Prestataire"), ("trip", "Voyage"), ("place", "Lieu"))
 
 class Review(Document):
     author = ReferenceField(User, required=True, reverse_delete_rule=CASCADE)

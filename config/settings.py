@@ -12,10 +12,12 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
+from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+load_dotenv(BASE_DIR / ".env", override=True) 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
@@ -49,7 +51,8 @@ INSTALLED_APPS = [
     'bookings',
     "reviews",
     'notifications',
-    'chat'
+    'chat',
+    'mates',
 ]
 
 MIDDLEWARE = [
