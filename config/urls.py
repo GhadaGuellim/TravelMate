@@ -22,6 +22,7 @@ urlpatterns = [
     path("api/chat/", include("chat.urls")),
     path("api/mates/", include("mates.urls")),
     path("api/communities/", include("communities.urls")),
+    path("api/chatbot/", include("chatbot.urls")),
 ]
 
 

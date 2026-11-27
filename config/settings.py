@@ -14,6 +14,8 @@ from datetime import timedelta
 from pathlib import Path
 from pathlib import Path
 from dotenv import load_dotenv
+import os 
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -177,3 +179,7 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
+
+CHATBOT_API_KEY = os.environ.get("CHATBOT_API_KEY", "") 
+CHATBOT_BASE_URL = os.environ.get("CHATBOT_BASE_URL", "https://api.groq.com/openai/v1") 
+CHATBOT_MODEL = os.environ.get("CHATBOT_MODEL", "llama-3.3-70b-versatile")
