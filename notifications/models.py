@@ -15,7 +15,7 @@ from users.models import User
 TYPES = (
     "like", "comment", "follow",
     "booking_request", "booking_accepted", "booking_refused", "booking_cancelled",
-    "message", "group",
+    "message", "group", "moderation", 
 )
 
 

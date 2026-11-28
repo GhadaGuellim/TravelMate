@@ -22,7 +22,12 @@ def _key(me, other, common, shared):
 
 def _looks_like_sentence(text):
     letters = sum(c.isalpha() for c in text)
-    return 20 <= len(text) <= 300 and letters >= 15 and " " in text
+    return (
+        20 <= len(text) <= 300
+        and letters >= 15
+        and " " in text
+        and text[-1] in ".!?…"
+    )
 
 
 def _facts(me, other, first, common, shared):
@@ -73,16 +78,23 @@ def generate_icebreaker(me, other, common, shared):
             json={
                 "model": MODEL,
                 "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 800,
+                "max_tokens": 1500,         # marge pour la réflexion + la phrase
                 "reasoning_effort": "low",
                 "temperature": 0.7,
             },
-            timeout=15,
+            timeout=20,
         )
         r.raise_for_status()
-        text = (r.json()["choices"][0]["message"].get("content") or "").strip().strip('"')
+        choice = r.json()["choices"][0]
+        text = (choice["message"].get("content") or "").strip().strip('"')
+        finish = choice.get("finish_reason")
     except Exception as e:
         print("GROQ ERREUR :", repr(e))
+        return None
+
+    # réponse tronquée : on la refuse, la carte garde la phrase par règles
+    if finish != "stop":
+        print("GROQ réponse tronquée ignorée :", finish, repr(text[-40:]))
         return None
 
     if not _looks_like_sentence(text):

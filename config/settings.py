@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'chat',
     'mates',
     "communities",
+    "moderation",
 ]
 
 MIDDLEWARE = [
@@ -67,6 +68,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'moderation.middleware.BlockedUserMiddleware',
 ]
 
 CORS_ALLOWED_ORIGINS = [

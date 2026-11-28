@@ -95,7 +95,21 @@ class LoginView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
+        
+        blocked = user.block_message()
+        if blocked:
+            return Response({"error": blocked, "code": "account_suspended"}, status=status.HTTP_403_FORBIDDEN)
+
+        if user.role == "admin":
+            return Response(
+                {"error": "Les administrateurs se connectent avec le bouton « Administrateur » de l'écran d'accueil."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         return Response({"user": user_data(user), "tokens": get_tokens(user)})
+    
+
+    
 
 PROVIDER_FIELDS = {"service_type", "service_description", "service_location", "phone",
                    "daily_rate", "availabilities"}
@@ -234,3 +248,24 @@ class SuggestionsView(APIView):
         excluded = [me.id] + [u.id for u in me.following]
         users = User.objects(id__nin=excluded).order_by("-created_at").limit(8)
         return Response([user_card(u) for u in users])
+
+
+class AdminLoginView(APIView):
+    """Connexion réservée aux administrateurs."""
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @extend_schema(request=LoginSerializer, responses={200: OpenApiTypes.OBJECT}, tags=["Auth"])
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        user = User.objects(email=data["email"].lower()).first()
+        # même message pour « compte inconnu », « mauvais mot de passe » et « pas admin »
+        if not user or user.role != "admin" or not user.verify_password(data["password"]):
+            return Response(
+                {"error": "Identifiants administrateur incorrects."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        return Response({"user": user_data(user), "tokens": get_tokens(user)})

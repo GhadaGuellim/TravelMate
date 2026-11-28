@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from django.contrib.auth.hashers import check_password, make_password
 from mongoengine import DateTimeField, Document, EmailField, IntField, ListField, ReferenceField, StringField, DictField
-ROLES = ("traveler", "provider")
+ROLES = ("traveler", "provider", "admin")
 SERVICE_TYPES = ("guide", "chauffeur")
 
 class User(Document):
@@ -36,3 +36,28 @@ class User(Document):
 
     def verify_password(self, raw_password):
         return check_password(raw_password, self.password)
+
+
+        # US27 : modération
+    status = StringField(choices=("active", "suspended", "banned"), default="active")
+    suspended_until = DateTimeField()
+    status_reason = StringField(max_length=300)
+
+    def block_message(self):
+        """Texte à afficher si le compte est bloqué, sinon chaîne vide."""
+        if self.status == "banned":
+            return "Ce compte a été banni pour non-respect des règles de la communauté."
+        if self.status == "suspended":
+            until = self.suspended_until
+            if until is None:
+                return "Ce compte est suspendu."
+            if until.tzinfo is None:
+                until = until.replace(tzinfo=timezone.utc)
+            if until > datetime.now(timezone.utc):
+                return f"Ce compte est suspendu jusqu'au {until:%d/%m/%Y}."
+        return ""
+
+    def effective_status(self):
+        if self.status == "banned":
+            return "banned"
+        return "suspended" if self.status == "suspended" and self.block_message() else "active"

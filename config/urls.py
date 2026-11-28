@@ -23,6 +23,7 @@ urlpatterns = [
     path("api/mates/", include("mates.urls")),
     path("api/communities/", include("communities.urls")),
     path("api/chatbot/", include("chatbot.urls")),
+    path("api/moderation/", include("moderation.urls")),
 ]
 
 

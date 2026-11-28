@@ -34,11 +34,12 @@ def author_data(user):
         "avatar_url": user.avatar_url or "",
     }
 
-def comment_data(c):
+def comment_data(c, me=None):
     return {
         "id": str(c.id),
         "text": c.text,
         "author": author_data(c.author),
+        "is_mine": bool(me and c.author.id == me.id),
         "created_at": c.created_at.isoformat() if c.created_at else None,
     }
 
@@ -66,7 +67,7 @@ def post_data(post, me, request=None,followed=None):
         "liked_by_me": me in post.likes,
         "saved_by_me": me in post.saved_by,
         "comments_count": len(post.comments),
-        "comments": [comment_data(c) for c in post.comments],
+        "comments": [comment_data(c, me) for c in post.comments],
         "shares_count": post.shares or 0,
         "is_mine": post.author.id == me.id,
         "is_following": str(post.author.id) in followed,
